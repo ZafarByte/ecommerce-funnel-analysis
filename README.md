@@ -33,6 +33,8 @@ to build an end-to-end data analytics solution.
 ---
 </p>
 
+# 🧰 Technology Stack
+
 | Technology | Purpose |
 |---|---|
 | 🐍 **Python** | Data preparation, EDA and behavioral analysis |
