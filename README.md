@@ -31,25 +31,6 @@ The analysis combines:
 to build an end-to-end data analytics solution.
 
 ---
-
-# 🧰 Technology Stack
-
-<p align="center">
-
-<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" width="70" height="70" alt="Python"/>
-
-&nbsp;&nbsp;&nbsp;
-
-<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/pandas/pandas-original.svg" width="70" height="70" alt="Pandas"/>
-
-&nbsp;&nbsp;&nbsp;
-
-<img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/postgresql/postgresql-original.svg" width="70" height="70" alt="PostgreSQL"/>
-
-&nbsp;&nbsp;&nbsp;
-
-<img src="https://upload.wikimedia.org/wikipedia/commons/c/cf/New_Power_BI_Logo.svg" width="70" height="70" alt="Power BI"/>
-
 </p>
 
 | Technology | Purpose |
