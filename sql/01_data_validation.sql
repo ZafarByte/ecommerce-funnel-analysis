@@ -1,4 +1,26 @@
- ---============================================================
+/*
+E-commerce Funnel Drop-off Analysis
+File: 01_data_validation.sql
+
+Dataset:
+RetailRocket E-commerce Dataset
+
+Purpose:
+Validate the PostgreSQL dataset before performing
+business analysis.
+
+Business Questions:
+1. How many records are present?
+2. What types of events are recorded?
+3. How many unique visitors are present?
+4. How many unique products are present?
+5. Are important fields missing?
+6. What period does the dataset cover?
+7. Are duplicate event records present?
+*/
+
+
+-- ============================================================
 -- 1. TOTAL ROW COUNT
 -- Business Question:
 -- How many event records are present in the dataset?
@@ -8,11 +30,13 @@ SELECT
     COUNT(*) AS total_rows
 FROM events;
 
+
 -- ============================================================
 -- 2. EVENT DISTRIBUTION
 -- Business Question:
 -- What types of events are recorded and how frequently?
 -- ============================================================
+
 SELECT
     event,
     COUNT(*) AS event_count
@@ -20,74 +44,96 @@ FROM events
 GROUP BY event
 ORDER BY event_count DESC;
 
+
 -- ============================================================
 -- 3. UNIQUE VISITORS
 -- Business Question:
 -- How many distinct visitors interacted with the platform?
 -- ============================================================
+
 SELECT
     COUNT(DISTINCT visitorid) AS unique_visitors
 FROM events;
 
+
 -- ============================================================
 -- 4. UNIQUE PRODUCTS
 -- Business Question:
--- How many distinct products are present in the dataset?
+-- How many distinct products are present?
 -- ============================================================
 
 SELECT
     COUNT(DISTINCT itemid) AS unique_products
 FROM events;
 
+
 -- ============================================================
 -- 5. MISSING VALUES
 -- Business Question:
 -- Are important fields missing from the dataset?
 -- ============================================================
+
 SELECT
-    COUNT(*) - COUNT(timestamp) AS missing_timestamp,
-    COUNT(*) - COUNT(visitorid) AS missing_visitorid,
-    COUNT(*) - COUNT(event) AS missing_event,
-    COUNT(*) - COUNT(itemid) AS missing_itemid,
-    COUNT(*) - COUNT(transactionid) AS missing_transactionid,
-    COUNT(*) - COUNT(event_datetime) AS missing_event_datetime
+    COUNT(*) - COUNT(timestamp)
+        AS missing_timestamp,
+
+    COUNT(*) - COUNT(visitorid)
+        AS missing_visitorid,
+
+    COUNT(*) - COUNT(event)
+        AS missing_event,
+
+    COUNT(*) - COUNT(itemid)
+        AS missing_itemid,
+
+    COUNT(*) - COUNT(transactionid)
+        AS missing_transactionid,
+
+    COUNT(*) - COUNT(event_datetime)
+        AS missing_event_datetime
 FROM events;
+
 
 -- ============================================================
 -- 6. DATE RANGE
 -- Business Question:
 -- What period of time does the dataset cover?
 -- ============================================================
+
 SELECT
-   MIN(event_datetime) AS start_date,
-   MAX(event_datetime) AS end_date
+    MIN(event_datetime) AS start_date,
+    MAX(event_datetime) AS end_date
 FROM events;
+
 
 -- ============================================================
 -- 7. DUPLICATE RECORDS
 -- Business Question:
 -- Are duplicate event records present?
 -- ============================================================
+
 SELECT
     COUNT(*) AS total_rows,
-    COUNT(DISTINCT (
-        timestamp,
-        visitorid,
-        event,
-        itemid,
-        transactionid
-    )) AS unique_event_rows
-FROM events;
 
+    COUNT(
+        DISTINCT (
+            timestamp,
+            visitorid,
+            event,
+            itemid,
+            transactionid
+        )
+    ) AS unique_event_rows,
 
-
-SELECT
     COUNT(*) -
-    COUNT(DISTINCT (
-        timestamp,
-        visitorid,
-        event,
-        itemid,
-        transactionid
-    )) AS duplicate_rows
+    COUNT(
+        DISTINCT (
+            timestamp,
+            visitorid,
+            event,
+            itemid,
+            transactionid
+        )
+    ) AS duplicate_rows
+
 FROM events;
