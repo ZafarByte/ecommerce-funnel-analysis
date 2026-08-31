@@ -200,3 +200,304 @@ engagement_segments AS (
 SELECT *
 FROM engagement_segments
 LIMIT 20;
+
+-- ============================================================
+-- 4. CONVERSION BY ENGAGEMENT
+-- ============================================================
+
+WITH visitor_summary AS (
+
+    SELECT
+        visitorid,
+
+        COUNT(*) AS total_events,
+
+        COUNT(*) FILTER (
+            WHERE event = 'view'
+        ) AS total_views,
+
+        COUNT(*) FILTER (
+            WHERE event = 'addtocart'
+        ) AS total_cart_events,
+
+        COUNT(*) FILTER (
+            WHERE event = 'transaction'
+        ) AS total_purchases,
+
+        COUNT(DISTINCT itemid) FILTER (
+            WHERE event = 'view'
+        ) AS unique_products_viewed
+
+    FROM events
+
+    GROUP BY visitorid
+),
+
+visitor_behavior AS (
+
+    SELECT
+        *,
+
+        CASE
+            WHEN total_purchases > 0
+            THEN 1
+            ELSE 0
+        END AS purchased
+
+    FROM visitor_summary
+),
+
+engagement_segments AS (
+
+    SELECT
+        *,
+
+        CASE
+            WHEN total_views <= 2
+                THEN 'Low'
+
+            WHEN total_views <= 5
+                THEN 'Medium'
+
+            ELSE 'High'
+
+        END AS engagement
+
+    FROM visitor_behavior
+),
+
+engagement_analysis AS (
+
+    SELECT
+        engagement,
+
+        COUNT(*) AS visitors,
+
+        SUM(purchased) AS purchasers,
+
+        ROUND(
+            AVG(total_views),
+            2
+        ) AS avg_views,
+
+        ROUND(
+            AVG(unique_products_viewed),
+            2
+        ) AS avg_unique_products,
+
+        ROUND(
+            AVG(total_cart_events),
+            2
+        ) AS avg_cart_events
+
+    FROM engagement_segments
+
+    GROUP BY engagement
+)
+
+SELECT
+    engagement,
+    visitors,
+    purchasers,
+    avg_views,
+    avg_unique_products,
+    avg_cart_events,
+
+    ROUND(
+        purchasers::numeric
+        / NULLIF(visitors, 0)
+        * 100,
+        2
+    ) AS conversion_rate
+
+FROM engagement_analysis
+
+ORDER BY
+    CASE engagement
+        WHEN 'Low' THEN 1
+        WHEN 'Medium' THEN 2
+        WHEN 'High' THEN 3
+    END;
+
+
+
+-- ============================================================
+-- 5. CONVERSION BY VIEW COUNT
+-- ============================================================
+
+WITH visitor_summary AS (
+
+    SELECT
+        visitorid,
+
+        COUNT(*) FILTER (
+            WHERE event = 'view'
+        ) AS total_views,
+
+        COUNT(*) FILTER (
+            WHERE event = 'transaction'
+        ) AS total_purchases
+
+    FROM events
+
+    GROUP BY visitorid
+),
+
+visitor_behavior AS (
+
+    SELECT
+        visitorid,
+        total_views,
+
+        CASE
+            WHEN total_purchases > 0
+            THEN 1
+            ELSE 0
+        END AS purchased
+
+    FROM visitor_summary
+
+    -- Ignore visitors with zero views
+    WHERE total_views > 0
+),
+
+view_count_analysis AS (
+
+    SELECT
+        total_views,
+
+        COUNT(*) AS visitors,
+
+        SUM(purchased) AS purchasers
+
+    FROM visitor_behavior
+
+    GROUP BY total_views
+)
+
+SELECT
+    total_views,
+    visitors,
+    purchasers,
+
+    ROUND(
+        purchasers::numeric
+        / NULLIF(visitors, 0)
+        * 100,
+        2
+    ) AS conversion_rate
+
+FROM view_count_analysis
+
+-- Ignore tiny groups
+WHERE visitors >= 50
+
+ORDER BY
+    total_views;
+
+
+
+-- ============================================================
+-- 6. CREATE VIEW-BASED ENGAGEMENT BANDS
+-- ============================================================
+
+WITH visitor_summary AS (
+
+    SELECT
+        visitorid,
+
+        COUNT(*) FILTER (
+            WHERE event = 'view'
+        ) AS total_views,
+
+        COUNT(*) FILTER (
+            WHERE event = 'transaction'
+        ) AS total_purchases,
+
+        COUNT(DISTINCT itemid) FILTER (
+            WHERE event = 'view'
+        ) AS unique_products_viewed
+
+    FROM events
+
+    GROUP BY visitorid
+),
+
+visitor_behavior AS (
+
+    SELECT
+        *,
+
+        CASE
+            WHEN total_purchases > 0
+            THEN 1
+            ELSE 0
+        END AS purchased
+
+    FROM visitor_summary
+
+    WHERE total_views > 0
+),
+
+view_bands AS (
+
+    SELECT
+        *,
+
+        CASE
+
+            WHEN total_views <= 2
+                THEN '1-2 views'
+
+            WHEN total_views <= 5
+                THEN '3-5 views'
+
+            WHEN total_views <= 10
+                THEN '6-10 views'
+
+            WHEN total_views <= 20
+                THEN '11-20 views'
+
+            ELSE '21+ views'
+
+        END AS view_band
+
+    FROM visitor_behavior
+)
+
+SELECT
+    view_band,
+
+    COUNT(*) AS visitors,
+
+    SUM(purchased) AS purchasers,
+
+    ROUND(
+        AVG(total_views),
+        2
+    ) AS avg_views,
+
+    ROUND(
+        AVG(unique_products_viewed),
+        2
+    ) AS avg_unique_products,
+
+    ROUND(
+        SUM(purchased)::numeric
+        / COUNT(*)
+        * 100,
+        2
+    ) AS conversion_rate
+
+FROM view_bands
+
+GROUP BY view_band
+
+ORDER BY
+    CASE view_band
+        WHEN '1-2 views' THEN 1
+        WHEN '3-5 views' THEN 2
+        WHEN '6-10 views' THEN 3
+        WHEN '11-20 views' THEN 4
+        WHEN '21+ views' THEN 5
+    END;
